@@ -1,0 +1,42 @@
+{
+  "environment":{
+    "version":"1.0"
+    , "protocol":"NONE"
+    , "comments":"This is a json file for testing environment section"
+    , "author":"ZCUBE"
+    , "licenced":"CC-BY"
+  }
+  ,
+  "data":{
+    "DATALEN": {"fn":"countBytes"}
+    , "VAR1" : {"const":135}
+  }
+  ,
+  "tools":{
+      "###":"Comment Line..."
+    , "KNOT"  : { "knots":[{"syntax":"bin.B2[HEAD:0]B2[:1]B2[:0]", "refid":"DATALEN"}] }
+    , "KNOT2" : { "extends":"KNOT", "log":"CHILD OF KNOT" }
+    , "DEP_1" : { "calls":["data:DATALEN"] }
+    , "DEP_2" : { "calls":["data:DATALEN"] }
+    , "DEP_3" : { "calls":["data:DATALEN"] }
+    , "DEP_4" : { "calls":["data:DATALEN"] }
+    , "DEP_5" : { "calls":["data:DATALEN"] }
+    , "DEP_6" : {
+        "subtools": [{ "extends":"DEP_1" }, {"log":"NODEP"}]
+    }
+    , "DEP_7" : {
+        "subtools": [{"log":"hello subtool-1"}, {"log":"hello subtool-2"}]
+    }
+    , "DEP_8" : {
+        "subtools": [{"log":"hello NODEP-1"}, { "extends":"DEP_6" }, {"log":"hello NODEP-2"}]
+    }
+    , "CALLEE_KNOT"  :{ "knots":[{"syntax":"bin.B2[DATALEN:0]"}] }
+    , "CALLER_KNOT"  :{ "knots":[{"syntax":"bin.B2[VAR1:0]"}] }
+  }
+  ,
+  "textures":{
+      "TT1":{"flow":[ "DEP_8" ], "###":"Test..."}
+    , "TT2":{"flow":[ "DEP_1", "DEP_2", "DEP_8" ], "###":"Test..."}
+    , "TT3":{"flow":[ "KNOT", "KNOT2", "DEP_6", "DEP_7" ], "###":"Test..."}
+  }
+}
