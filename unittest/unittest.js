@@ -312,3 +312,75 @@ describe("TestToolLink", function() {
 
 
 });
+
+
+describe("TestKnot", function() {
+
+	it("testSyntax1", function() {
+		let spec = JSON.parse(fs.readFileSync(path.resolve(__dirname, './test_knot.json'), 'utf8'));
+		let ws = workshop.setupWorkshop(spec);
+
+		let knot = workshop.__get__("Knot").setup({"syntax":"bin.b1[:0]b1[:1]b2[:2]b1[:3]", "refid":"ROUTE"});
+		let cman = ws.assign('EMPTY');
+		let skein = nio.Skein.allocate(1024);
+
+		cman.initRef("ROUTE", [0x00, 0xFF, 0x03FF, 0x00]);
+		knot.knit(cman, skein);
+
+		skein.flip();
+		console.log('===============================');
+		console.log(skein.duplicate().toHexString());
+
+		assert.strictEqual(skein.remaining, 5);
+		assert.strictEqual(skein.get(), 0x00);
+		assert.strictEqual(skein.get(), 0xFF);
+		assert.strictEqual(skein.get(), 0xFF);
+		assert.strictEqual(skein.get(), 0x03);
+		assert.strictEqual(skein.get(), 0x00);
+	});
+
+	it("testLoop", function() {
+		let spec = JSON.parse(fs.readFileSync(path.resolve(__dirname, './test_knot.json'), 'utf8'));
+		let ws = workshop.setupWorkshop(spec);
+
+		let knot = workshop.__get__("Knot").setup({"syntax":"bin.b1[:0]", "loop":"*", "refid":"ROUTE"});
+		let cman = ws.assign('EMPTY');
+		let skein = nio.Skein.allocate(1024);
+
+		cman.initRef("ROUTE", [0x01, 0x02, 0x01F, 0xFF]);
+		knot.knit(cman, skein);
+
+		skein.flip();
+		console.log('===============================');
+		console.log(skein.duplicate().toHexString());
+
+		assert.strictEqual(skein.remaining, 4);
+		assert.strictEqual(skein.get(), 0x01);
+		assert.strictEqual(skein.get(), 0x02);
+		assert.strictEqual(skein.get(), 0x1F);
+		assert.strictEqual(skein.get(), 0xFF);
+	});
+
+	it("testLoop2", function() {
+		let spec = JSON.parse(fs.readFileSync(path.resolve(__dirname, './test_knot.json'), 'utf8'));
+		let ws = workshop.setupWorkshop(spec);
+
+		let knot = workshop.__get__("Knot").setup({"syntax":"bin.b1[:1]b1[:0]", "loop":"*", "refid":"ROUTE"});
+		let cman = ws.assign('EMPTY');
+		let skein = nio.Skein.allocate(1024);
+
+		cman.initRef("ROUTE", [0x01, 0x02, 0x01F, 0xFF]);
+		knot.knit(cman, skein);
+
+		skein.flip();
+		console.log('===============================');
+		console.log(skein.duplicate().toHexString());
+
+		assert.strictEqual(skein.remaining, 4);
+		assert.strictEqual(skein.get(), 0x02);
+		assert.strictEqual(skein.get(), 0x01);
+		assert.strictEqual(skein.get(), 0xFF);
+		assert.strictEqual(skein.get(), 0x1F);
+	});
+
+});

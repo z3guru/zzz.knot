@@ -466,6 +466,14 @@ class CraftsMan
 		return this._refMem.getRefValueByNum(refnum, idx, cycle);
 	}
 
+	getRefSize(refid)
+	{
+		let refnum = this._workshop.dataDivision.refTable.getRefnum(refid);
+		let cell = this._refMem.cell(refnum);
+		return cell === undefined ? 0 :  cell.size;
+	}
+
+
 	// TODO default value
 	initRef(refid, value, isReadonly)
 	{
@@ -948,13 +956,11 @@ const __knot_libs = {
 		if ( syntax.startsWith("bit") )
 		{
 			let defstr = syntax.substring(syntax.indexOf('.') + 1);
-			console.debug("new BitKnot, defs=" + defstr);
 			return BitKnot.setup(defstr, refid);
 		}
 		else if ( syntax.startsWith("bin") )
 		{
 			let defstr = syntax.substring(syntax.indexOf('.') + 1);
-			console.debug("new BinaryKnot, defs=" + defstr);
 			return BinaryKnot.setup(defstr, refid);
 		}
 	}
@@ -1045,6 +1051,9 @@ class Knot
 			// const =============
 			knot._const = __knot_libs.setupConst(spec.const);
 
+			// cycle =============
+			knot._loop = isNaN(spec.loop) ? ('*' === spec.loop ? 0 : 1) : parseInt(spec.loop);
+
 			return knot;
 		}
 		catch(e)
@@ -1056,9 +1065,17 @@ class Knot
 	get minimum() { return this._minimum; }
 	get references() { return this._references; }
 
-	knit(cman, skein, loop = 1)
+	knit(cman, skein)
 	{
 		let cycle = 0;
+		let loop = this._loop;
+
+		if ( loop === 0 )
+		{
+			loop = cman.getRefSize(this._localRefid) / this._defs.length;
+			if ( loop < 1 ) loop = 1;
+		}
+
 		for ( var i = 0; i < loop; i++ )
 		{
 			this._knit(cman, skein, cycle++);
@@ -1085,12 +1102,12 @@ class Knot
 			return function() { return sz; }
 	}
 
-	_getValue(cman, defref, defidx, cycle)
+	_getValue(cman, defrefid, defidx, cycle)
 	{
 		try
 		{
-			let ref = defref || this._localRefid;
-			return ref ? cman.getRefValue(ref, defidx, cycle) : this._const[defidx];
+			let refid = defrefid || this._localRefid;
+			return refid ? cman.getRefValue(refid, defidx, cycle) : this._const[defidx];
 		}
 		catch(e)
 		{
@@ -1158,7 +1175,7 @@ class BitKnot extends Knot
 
 		for ( let i = 0; i < this._defs.length; i++ )
 		{
-			let vv = this._getValue(cman, this._defs[i].ref, this._defs[i].idx, cycle);
+			let vv = this._getValue(cman, this._defs[i].refid, this._defs[i].idx, cycle);
 
 			vv = this._defs[i].func(vv & this._defs[i].mask);
 			bb |= vv << (8 - this._defs[i].offset - this._defs[i].sz);
@@ -1217,7 +1234,7 @@ class BinaryKnot extends Knot
 	{
 		for ( let i = 0; i < this._defs.length; i++ )
 		{
-			let vv = this._getValue(cman, this._defs[i].ref, this._defs[i].idx, cycle);
+			let vv = this._getValue(cman, this._defs[i].refid, this._defs[i].idx, cycle);
 
 			skein.order = this._defs[i].bB ? nio.Skein.LITTLE_ENDIAN : nio.Skein.BIG_ENDIAN;
 			skein.putUInt(vv, this._defs[i].sz);
@@ -1230,7 +1247,7 @@ class BinaryKnot extends Knot
 		{
 			skein.order = this._defs[i].bB ? nio.Skein.LITTLE_ENDIAN : nio.Skein.BIG_ENDIAN;
 			let vv = skein.getUInt(this._defs[i].sz);
-			this._setValue(vv, cman, this._defs[i].ref, this._defs[i].idx, cycle)
+			this._setValue(vv, cman, this._defs[i].refid, this._defs[i].idx, cycle)
 		}
 	}
 

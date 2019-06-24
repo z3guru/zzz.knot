@@ -1,0 +1,24 @@
+{
+  "environment":{
+    "version":"1.0"
+    , "protocol":"NONE"
+    , "comments":"This is a json file for testing environment section"
+    , "author":"ZCUBE"
+    , "licenced":"CC-BY"
+  }
+  ,
+  "data":{
+    "DATALEN": {"fn":"countBytes"}
+    , "VAR1" : {"const":135}
+  }
+  ,
+  "tools":{
+      "###":"Comment Line..."
+    , "KNOT"  : { "knots":[{"syntax":"bin.B2[HEAD:0]B2[:1]B2[:0]", "refid":"DATALEN"}] }
+    , "KNOT2" : { "extends":"KNOT", "log":"CHILD OF KNOT" }
+  }
+  ,
+  "textures":{
+      "EMPTY":{"flow":[ ], "###":"Universal Texture"}
+  }
+}

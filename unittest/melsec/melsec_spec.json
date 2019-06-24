@@ -1,0 +1,49 @@
+{
+  "environment":{
+    "version":"1.0"
+    , "protocol":"NONE"
+    , "comments":"This is a json file for testing MELSEC 3E Spec"
+    , "author":"ZCUBE"
+    , "licenced":"CC-BY"
+  }
+  ,
+  "data":{
+    "DATALEN": { "fn":"countBytes" }
+    , "VAR1" : { "const":135 }
+    , "BIN.3E.FIXVAL.REQ" : { "const":5000 }
+    , "BIN.3E.FIXVAL.RSP" : { "const":"D000" }
+  }
+  ,
+  "tools":{
+      "###":"Comment Line..."
+    , "Bin.3E.Subheader"    : { "knots":[{"syntax":"bin.B2[FIXVAL:0]"}] }
+    , "Bin.3E.AccessRoute"  : { "knots":[{"syntax":"bin.b1[:0]b1[:1]b2[:2]b1[:3]", "refid":"ROUTE"}], "log":"AccessRoute" }
+    , "Bin.3E.DataLen"      : { "knots":[{"syntax":"bin.b2[:0]", "refid":"DATALEN"}] }
+    , "Bin.3E.MonTimer"     : { "knots":[{"syntax":"bin.b2[MONTIMER:0]"}], "calls":["data:DATALEN"] }
+    , "Bin.3E.Command"      : { "knots":[{"syntax":"bin.b2[CMD:0]B2[SUBCMD:0]"}], "calls":["data:DATALEN"] }
+    , "Bin.3E.Points"       : { "knots":[{"syntax":"bin.b2[:0]", "refid":"POINTS", "loop":"*"}], "calls":["data:DATALEN"] }
+    , "Bin.3E.Device"       : { "knots":[{"syntax":"bin.b3[:1]b1[:0]", "refid":"DEVICE", "loop":"*"}], "calls":["data:DATALEN"] }
+
+    , "Bin.3E.Header"       : {
+        "subtools": [
+          { "extends":"Bin.3E.Subheader" },
+          { "extends":"Bin.3E.AccessRoute" },
+          { "extends":"Bin.3E.DataLen" },
+          { "extends":"Bin.3E.MonTimer" }
+        ]
+      }
+
+
+    , "ReqData"         : { "calls":["data:DATALEN"] }
+    , "RspDataLen"      : { "knots":[{"syntax":"bin.B2[:0]"}], "refid":"DATALEN" }
+    , "RspData"         : { "calls":["data:DATALEN"] }
+    , "EndCode"         : { "knots":[{"syntax":"bin.B2[ENDCODE:0]"}] }
+    , "DevicePoints"    : { "knots": [{"syntax":"bin.B2[:0]"}], "refid":"DPOINTS" }
+    , "AccessPoints"    : { "knots": [{"syntax":"bin.B1[:0]"}], "refid":"APOINTS" }
+    , "Blocks"          : { "knots": [{"syntax":"bin.B1[:0]"}], "refid":"BLOCKS" }
+  }
+  ,
+  "textures":{
+      "RR"  : { "flow":[ "Bin.3E.Header", "Bin.3E.Command", "Bin.3E.Points", "Bin.3E.Device" ], "###":"Random Read..."}
+  }
+}
