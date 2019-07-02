@@ -3,6 +3,54 @@ var nio = require('zzz.skein');
 
 const __helpers = {
 	"isComment": function(s) { return s !== undefined && s.startsWith('###'); }
+
+	, "parseValue": function(s) {
+
+		if ( s === undefined ) return undefined;
+
+		try
+		{
+			let _vv = s;
+
+			if ( Array.isArray(s) )
+			{
+				_vv = [];
+				s.forEach(itm => {
+					_vv.push(__helpers.parseValue(itm));
+				});
+			}
+
+			else if ( isNaN(s) )
+			{
+				let tokens = s.split(':');
+				if ( tokens.length == 2 )
+				{
+					// if there are two elements, 1st element is a type. 2nd element is a value
+					let _type = tokens[0];
+					_vv  = tokens[1];
+
+					switch(_type)
+					{
+						case 'b': _vv = parseInt(_vv, 2); break;
+						case 'o': _vv = parseInt(_vv, 8); break;
+						case 'd': _vv = parseInt(_vv, 10); break;
+						case 'h': _vv = parseInt(_vv, 16); break;
+						case 'f': _vv = parseFloat(_vv); break;
+
+						case 's':
+						default:
+							// no-op
+					}
+				}
+			}
+
+			return _vv;
+		}
+		catch(e)
+		{
+			throw "invalid const definition";
+		}
+	}
 }
 
 /**
@@ -51,7 +99,7 @@ class DataDivision
 
 			if ( refspec.const !== undefined )
 			{
-				ref.__const = refspec.const;
+				ref.__const = __helpers.parseValue(refspec.const);
 			}
 
 			dd._refTable.addRef(refid, ref);
@@ -968,47 +1016,7 @@ const __knot_libs = {
 
 	setupConst: function(spec)
 	{
-		if ( spec === undefined ) return undefined;
-		if ( !Array.isArray(spec)) throw "const must be array";
-		if ( spec.length == 0 ) return undefined;
-
-		let _const = [];
-
-		try
-		{
-			spec.forEach(function(c) {
-
-				if ( !isNaN(c) ) _const.push(c);
-				else
-				{
-					let tokens = c.split(':');
-					if ( tokens.length != 1 && tokens.length != 2 )
-						throw "invalid const definition";
-
-					// if there are two elements, 1st element is a type. 2nd element is a value
-					// if one, 1st element is a value, the type is string(default)
-					let _type = tokens.length == 1 ? "s" : tokens[0];
-					let _val  = tokens.length == 1 ? tokens[0] : tokens[1];
-
-					switch(_type)
-					{
-						case 's': _const.push(_val); break;
-						case 'b': _const.push(parseInt(_val, 2)); break;
-						case 'd': _const.push(parseInt(_val, 10)); break;
-						case 'h': _const.push(parseInt(_val, 16)); break;
-						case 'f': _const.push(parseFloat(_val)); break;
-						default:
-							throw "unsupported const type:" + _type;
-					}
-				}
-			});
-		}
-		catch(e)
-		{
-			throw "invalid const definition";
-		}
-
-		return _const;
+		return __helpers.parseValue(spec);
 	}
 }
 
@@ -1144,7 +1152,7 @@ class BitKnot extends Knot
 	static setup(syntax, refid)
 	{
 		let tokens = null;
-		let re = /\s*([bB])\s*(\d+)\s*\[\s*(\w+)?\s*:\s*(\d+)\s*\]\s*/g;
+		let re = /\s*([bB])\s*(\d+)\s*\[\s*([\w\.]+)?\s*:\s*(\d+)\s*\]\s*/g;
 		let defs = [];
 		let offset = 0;
 
@@ -1204,7 +1212,7 @@ class BinaryKnot extends Knot
 	static setup(syntax)
 	{
 		let tokens = null;
-		let re = /\s*([bB])\s*(\d+)(?:\s*\[\s*(\w+)?\s*:\s*(\d+)\s*\])?\s*/g;
+		let re = /\s*([bB])\s*(\d+)(?:\s*\[\s*([\w\.]+)?\s*:\s*(\d+)\s*\])?\s*/g;
 		let defs = [];
 
 		let idxGlobalOffset = 0;

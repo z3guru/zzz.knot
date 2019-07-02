@@ -6,6 +6,18 @@ var assert = require('assert');
 var rewire = require("rewire");
 var workshop = rewire('../workshop');
 
+describe("Test Helper Functions", function() {
+
+	it("test parseValue", function() {
+		let helpers = workshop.__get__("__helpers");
+
+		assert.strictEqual(helpers.parseValue("h:0f"), 0x0F);
+		assert.strictEqual(helpers.parseValue("o:10"), 0o10);
+		assert.strictEqual(helpers.parseValue("b:10"), 0b10);
+	});
+
+});
+
 describe("TestRefMemCell", function() {
 
 	it("testFillGet", function() {
@@ -339,6 +351,29 @@ describe("TestKnot", function() {
 		assert.strictEqual(skein.get(), 0x00);
 	});
 
+	it("testSyntax reference with dot", function() {
+		let spec = JSON.parse(fs.readFileSync(path.resolve(__dirname, './test_knot.json'), 'utf8'));
+		let ws = workshop.setupWorkshop(spec);
+
+		let knot = workshop.__get__("Knot").setup({"syntax":"bin.b1[ROUTE.REQ:0]b1[ROUTE.REQ:1]b2[ROUTE.REQ:2]b1[ROUTE.REQ:3]"});
+		let cman = ws.assign('EMPTY');
+		let skein = nio.Skein.allocate(1024);
+
+		cman.initRef("ROUTE.REQ", [0x00, 0xFF, 0x03FF, 0x00]);
+		knot.knit(cman, skein);
+
+		skein.flip();
+		console.log('===============================');
+		console.log(skein.duplicate().toHexString());
+
+		assert.strictEqual(skein.remaining, 5);
+		assert.strictEqual(skein.get(), 0x00);
+		assert.strictEqual(skein.get(), 0xFF);
+		assert.strictEqual(skein.get(), 0xFF);
+		assert.strictEqual(skein.get(), 0x03);
+		assert.strictEqual(skein.get(), 0x00);
+	});
+
 	it("testLoop", function() {
 		let spec = JSON.parse(fs.readFileSync(path.resolve(__dirname, './test_knot.json'), 'utf8'));
 		let ws = workshop.setupWorkshop(spec);
@@ -381,6 +416,46 @@ describe("TestKnot", function() {
 		assert.strictEqual(skein.get(), 0x01);
 		assert.strictEqual(skein.get(), 0xFF);
 		assert.strictEqual(skein.get(), 0x1F);
+	});
+
+
+	it("test using const in DataDivision case-1", function() {
+		let spec = JSON.parse(fs.readFileSync(path.resolve(__dirname, './test_knot.json'), 'utf8'));
+		let ws = workshop.setupWorkshop(spec);
+
+		let knot = workshop.__get__("Knot").setup({"syntax":"bin.b1[:0]", "refid":"VAR1"});
+		let cman = ws.assign('EMPTY');
+		let skein = nio.Skein.allocate(1024);
+
+		knot.knit(cman, skein);
+
+		skein.flip();
+		console.log('===============================');
+		console.log(skein.duplicate().toHexString());
+
+		assert.strictEqual(skein.remaining, 1);
+		assert.strictEqual(skein.get(), 0xFF);
+	});
+
+	it("test using const in DataDivision case-2", function() {
+		let spec = JSON.parse(fs.readFileSync(path.resolve(__dirname, './test_knot.json'), 'utf8'));
+		let ws = workshop.setupWorkshop(spec);
+
+		let knot = workshop.__get__("Knot").setup({"syntax":"bin.b1[:0]b1[:1]b1[:2]b1[:3]", "refid":"VAR2"});
+		let cman = ws.assign('EMPTY');
+		let skein = nio.Skein.allocate(1024);
+
+		knot.knit(cman, skein);
+
+		skein.flip();
+		console.log('===============================');
+		console.log(skein.duplicate().toHexString());
+
+		assert.strictEqual(skein.remaining, 4);
+		assert.strictEqual(skein.get(), 1);
+		assert.strictEqual(skein.get(), 2);
+		assert.strictEqual(skein.get(), 3);
+		assert.strictEqual(skein.get(), 4);
 	});
 
 });

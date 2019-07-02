@@ -9,7 +9,8 @@
   ,
   "data":{
     "DATALEN": {"fn":"countBytes"}
-    , "VAR1" : {"const":135}
+    , "VAR1" : {"const":255}
+    , "VAR2" : {"const":["h:01", "b:10", "o:03", 4]}
   }
   ,
   "tools":{

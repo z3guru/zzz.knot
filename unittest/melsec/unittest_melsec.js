@@ -17,7 +17,52 @@ describe("TestCommand", function() {
 		context.ws = workshop.setupWorkshop(context.spec);
 	});
 
-	it("testRandomRead", function() {
+	it("testBatchRead CMD_0401", function() {
+
+		// test varray
+		let cman = context.ws.assign("BR");
+		let skein = nio.Skein.allocate(1024);
+
+		//
+		//cman.initRef("FIXVAL", [0x5000]);
+		cman.initRef("ROUTE", [0x00, 0xFF, 0x03FF, 0x00]);
+		cman.initRef("MONTIMER", [0x0010]);
+		cman.initRef("CMD", [0x0401]);
+		cman.initRef("SUBCMD", [0x0001]);
+		cman.initRef("POINTS", [8]);
+		cman.initRef("DEVICE", [0x90, 0x64]);
+
+		while ( !cman.knit(skein) );
+
+		skein.flip();
+		console.log('===============================');
+		console.log(skein.toHexString());
+	});
+
+	it("testBatchRead CMD_1401", function() {
+
+		// test varray
+		let cman = context.ws.assign("BW");
+		let skein = nio.Skein.allocate(1024);
+
+		//
+		//cman.initRef("FIXVAL", [0x5000]);
+		cman.initRef("ROUTE", [0x00, 0xFF, 0x03FF, 0x00]);
+		cman.initRef("MONTIMER", [0x0010]);
+		cman.initRef("CMD", [0x1401]);
+		cman.initRef("SUBCMD", [0x0000]);
+		cman.initRef("POINTS", [3]);
+		cman.initRef("DEVICE", [0xA8, 100]);
+		cman.initRef("DATA", [0x1995, 0x1202, 0x1130]);
+
+		while ( !cman.knit(skein) );
+
+		skein.flip();
+		console.log('===============================');
+		console.log(skein.toHexString());
+	});
+
+	it("testRandomRead CMD_0403", function() {
 
 		// test varray
 		let cman = context.ws.assign("RR");
@@ -27,9 +72,9 @@ describe("TestCommand", function() {
 		cman.initRef("FIXVAL", [0x5000]);
 		cman.initRef("ROUTE", [0x00, 0xFF, 0x03FF, 0x00]);
 		cman.initRef("CMD", [0x0403]);
-		cman.initRef("MONTIMER", [0x0010]);
-		cman.initRef("POINTS", [3, 2]);
-		cman.initRef("DEVICE", [0x9C, 10, 0x9C, 11, 0x9C, 12, 0xA8, 255, 0xA8, 257]);
+		cman.initRef("MONTIMER", [0x0000]);
+		cman.initRef("POINTS", [4, 3]);
+		cman.initRef("DEVICE", [0xA8, 0, 0xC2, 0, 0x90, 100, 0xA8, 0x5DC, 0x9D, 0x160, 0x90, 0x457]);
 
 		while ( !cman.knit(skein) );
 
@@ -37,4 +82,27 @@ describe("TestCommand", function() {
 		console.log('===============================');
 		console.log(skein.toHexString());
 	});
+
+
+	it("testRandomWrite CMD_1402", function() {
+
+		// test varray
+		let cman = context.ws.assign("RR");
+		let skein = nio.Skein.allocate(1024);
+
+		//
+		cman.initRef("FIXVAL", [0x5000]);
+		cman.initRef("ROUTE", [0x00, 0xFF, 0x03FF, 0x00]);
+		cman.initRef("CMD", [0x0403]);
+		cman.initRef("MONTIMER", [0x0000]);
+		cman.initRef("POINTS", [4, 3]);
+		cman.initRef("DEVICE", [0xA8, 0, 0xC2, 0, 0x90, 100, 0xA8, 0x5DC, 0x9D, 0x160, 0x90, 0x457]);
+
+		while ( !cman.knit(skein) );
+
+		skein.flip();
+		console.log('===============================');
+		console.log(skein.toHexString());
+	});
+
 });
